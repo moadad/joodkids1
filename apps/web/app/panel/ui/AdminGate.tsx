@@ -1,21 +1,33 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { watchAdmin } from "@/lib/panel";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { app } from "@/lib/firebase";
 
-export default function AdminGate({ children }: { children: React.ReactNode }) {
-  const router = useRouter();
-  const [ok, setOk] = useState(false);
+export default function AdminGate({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const [allowed, setAllowed] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsub = watchAdmin(
-      () => setOk(true),
-      () => router.replace("/panel/login")
-    );
-    return () => unsub();
-  }, [router]);
+    const auth = getAuth(app);
 
-  if (!ok) return <div className="text-sm text-zinc-600">جار التحقق من صلاحيات الأدمن…</div>;
-  return <>{children}</>;
+    const unsub = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setAllowed(true);
+      } else {
+        window.location.href = "/";
+      }
+      setLoading(false);
+    });
+
+    return () => unsub();
+  }, []);
+
+  if (loading) return null;
+
+  return <>{allowed && children}</>;
 }
