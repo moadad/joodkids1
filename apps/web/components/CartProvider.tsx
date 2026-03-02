@@ -7,13 +7,13 @@ export type CartItem = {
   code: number;
   name: string;
   seriesQty: 6 | 9 | 12;
-  seriesCount: number; // عدد السيري
+  seriesCount: number;
   promo: "عادي" | "عرض" | "خصم";
   imageUrl?: string;
 };
 
 type CartState = {
-  items: Record<string, CartItem>; // key = code
+  items: Record<string, CartItem>;
 };
 
 type CartAction =
@@ -30,8 +30,8 @@ function reducer(state: CartState, action: CartAction): CartState {
   switch (action.type) {
     case "HYDRATE":
       return action.state;
-    case "ADD": {
 
+    case "ADD": {
       const codeKey = String(action.product.code);
       const existing = state.items[codeKey];
       const nextCount = (existing?.seriesCount ?? 0) + 1;
@@ -49,25 +49,26 @@ function reducer(state: CartState, action: CartAction): CartState {
         },
       };
     }
-case "ADD_WITH_COUNT": {
-  const codeKey = String(action.product.code);
-  const existing = state.items[codeKey];
-  const addCount = Math.max(1, Math.floor(action.seriesCount));
-  const nextCount = (existing?.seriesCount ?? 0) + addCount;
-  return {
-    items: {
-      ...state.items,
-      [codeKey]: {
-        code: action.product.code,
-        name: action.product.name,
-        seriesQty: action.product.seriesQty,
-        promo: action.product.promo,
-        imageUrl: action.product.images?.[0]?.url,
-        seriesCount: nextCount,
-      },
-    },
-  };
-}
+
+    case "ADD_WITH_COUNT": {
+      const codeKey = String(action.product.code);
+      const existing = state.items[codeKey];
+      const addCount = Math.max(1, Math.floor(action.seriesCount));
+      const nextCount = (existing?.seriesCount ?? 0) + addCount;
+      return {
+        items: {
+          ...state.items,
+          [codeKey]: {
+            code: action.product.code,
+            name: action.product.name,
+            seriesQty: action.product.seriesQty,
+            promo: action.product.promo,
+            imageUrl: action.product.images?.[0]?.url,
+            seriesCount: nextCount,
+          },
+        },
+      };
+    }
 
     case "SET_COUNT": {
       const codeKey = String(action.code);
@@ -76,14 +77,17 @@ case "ADD_WITH_COUNT": {
       const c = Math.max(1, Math.floor(action.seriesCount));
       return { items: { ...state.items, [codeKey]: { ...existing, seriesCount: c } } };
     }
+
     case "REMOVE": {
       const codeKey = String(action.code);
       const next = { ...state.items };
       delete next[codeKey];
       return { items: next };
     }
+
     case "CLEAR":
       return { items: {} };
+
     default:
       return state;
   }
@@ -101,33 +105,24 @@ type CartContextValue = {
 
 const CartContext = createContext<CartContextValue | null>(null);
 
-export function CartProvider({ children }: { children: React.ReactNode }) {
+function CartProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(reducer, { items: {} });
 
-  // hydrate
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) dispatch({ type: "HYDRATE", state: JSON.parse(raw) as CartState });
-    } catch {
-      // ignore
-    }
+    } catch {}
   }, []);
 
-  // persist
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    } catch {
-      // ignore
-    }
+    } catch {}
   }, [state]);
 
   const items = useMemo(() => Object.values(state.items), [state.items]);
-  const totalSeries = useMemo(
-    () => items.reduce((sum, i) => sum + (i.seriesCount || 0), 0),
-    [items]
-  );
+  const totalSeries = useMemo(() => items.reduce((sum, i) => sum + (i.seriesCount || 0), 0), [items]);
 
   const value: CartContextValue = {
     items,
@@ -142,11 +137,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }
 
+export default CartProvider;
+
 export function useCart() {
   const ctx = useContext(CartContext);
   if (!ctx) throw new Error("useCart must be used within CartProvider");
   return ctx;
 }
-
-// default export for compatibility
-export default CartProvider;

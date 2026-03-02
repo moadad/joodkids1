@@ -1,19 +1,30 @@
 import * as admin from "firebase-admin";
 
-function privateKey() {
-  const key = process.env.FIREBASE_ADMIN_PRIVATE_KEY;
-  return key ? key.replace(/\\n/g, "\n") : undefined;
+function getPrivateKey() {
+  const k = process.env.FIREBASE_ADMIN_PRIVATE_KEY;
+  if (!k) return undefined;
+
+  // لو مخزن في Vercel كـ \n نحولها لـ newline حقيقي
+  return k.replace(/\\n/g, "\n");
 }
 
-if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.cert({
-      projectId: process.env.FIREBASE_ADMIN_PROJECT_ID,
-      clientEmail: process.env.FIREBASE_ADMIN_CLIENT_EMAIL,
-      privateKey: privateKey(),
-    }),
-  });
+function getProjectId() {
+  return process.env.FIREBASE_ADMIN_PROJECT_ID;
 }
 
-export const adminAuth = admin.auth();
+function getClientEmail() {
+  return process.env.FIREBASE_ADMIN_CLIENT_EMAIL;
+}
+
+export const adminApp =
+  admin.apps.length > 0
+    ? admin.apps[0]
+    : admin.initializeApp({
+        credential: admin.credential.cert({
+          projectId: getProjectId(),
+          clientEmail: getClientEmail(),
+          privateKey: getPrivateKey(),
+        }),
+      });
+
 export const adminDb = admin.firestore();
