@@ -1,32 +1,35 @@
 import "./globals.css";
-import type { Metadata, Viewport } from "next";
+import type { Metadata } from "next";
+import { Cairo } from "next/font/google";
+import CartProvider from "@/components/CartProvider";
 import Header from "@/components/Header";
-import { CartProvider } from "@/components/CartProvider";
 import Footer from "@/components/Footer";
 
+const cairo = Cairo({
+  subsets: ["arabic"],
+  weight: ["400", "600", "700", "800"],
+});
+
 export const metadata: Metadata = {
-  title: "جود كيدز | جملة فقط",
-  description: "كتالوج ملابس أطفال — بيع بالجملة فقط (سيري).",
-  manifest: "/manifest.webmanifest",
-  icons: {
-    icon: "/favicon.png",
-    apple: "/apple-touch-icon.png",
-  },
+  title: "جود كيدز | Jood Kids",
+  description: "ملابس أطفال جملة",
 };
 
-export const viewport: Viewport = {
-  themeColor: "#0a0a0a",
-};
-
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="ar" dir="rtl">
-      \1
+      <body className={cairo.className}>
         <CartProvider>
-<Header />
-        <main className="flex-1">{children}</main>
-        <Footer />
-              </CartProvider>
+          <Header />
+          <main className="min-h-screen bg-white">
+            {children}
+          </main>
+          <Footer />
+        </CartProvider>
       </body>
     </html>
   );
